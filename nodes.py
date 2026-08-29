@@ -6,7 +6,9 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from utils.config import settings
 
-from utils.prompts import QUERY_TRANSFORMATION_PROMPT
+from utils.prompts import QUERY_TRANSFORMATION_PROMPT,SUPERVISOR_PROMPT
+
+from schemas.supervisor import SelectedPlan
 
 llm = ChatGoogleGenerativeAI(
     model = settings.model_name,
@@ -65,4 +67,27 @@ def validate_input(state:AgentState):
     return {
         "status" : "validated"
     }
+
+structured_llm = llm.with_structured_output(SelectedPlan)
+
+def supervisor(state:AgentState):
+
+    prompt = ChatPromptTemplate.from_template(
+        SUPERVISOR_PROMPT)
+
+    chain = prompt | structured_llm
+
+    response = chain.invoke({
+        "query" : state["transformed_query"]
+    })
+
+    return {
+        "selected_agents" : response.selected_agents,
+        "plan" : [
+            step.model_dump()
+            for step in response.plan
+        ],
+        "status" : "task delegated"
+    }
+
 

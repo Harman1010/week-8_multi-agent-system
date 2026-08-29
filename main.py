@@ -32,8 +32,31 @@
 
 #print(response.content)
 
-from graph import create_graph
+#from graph import create_graph
 
+
+#graph = create_graph()
+
+#initial_state = {
+ #   "query": "Explain langgraph in simple words",
+  #  "transformed_query": "",
+   # "plan": [],
+    #"results": {},
+    #"observations": [],
+    #"status": "",
+    #"answer": ""
+#}
+
+#print("Original status")
+#print(initial_state["status"])
+
+#result = graph.invoke(initial_state)
+
+#print("After query")
+#print(result["status"])
+#print(result["answer"])
+
+from graph import create_graph
 
 graph = create_graph()
 
@@ -42,16 +65,10 @@ initial_state = {
     "transformed_query": "",
     "plan": [],
     "results": {},
+    "selected_agents" : [],
     "observations": [],
     "status": "",
     "answer": ""
 }
 
-print("Original status")
-print(initial_state["status"])
-
-result = graph.invoke(initial_state)
-
-print("After query")
-print(result["status"])
-print(result["answer"])
+print(graph.get_graph())
