@@ -38,18 +38,20 @@ from graph import create_graph
 graph = create_graph()
 
 initial_state = {
-    "query": "tell me recent stuff about ai agents and also give python code example",
+    "query": "Explain langgraph in simple words",
     "transformed_query": "",
     "plan": [],
     "results": {},
     "observations": [],
-    "status": ""
+    "status": "",
+    "answer": ""
 }
+
+print("Original status")
+print(initial_state["status"])
 
 result = graph.invoke(initial_state)
 
-print("Original query")
-print(result["query"])
-
-print("Transformed query")
-print(result["transformed_query"])
+print("After query")
+print(result["status"])
+print(result["answer"])

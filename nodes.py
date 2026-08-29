@@ -33,3 +33,36 @@ def transform_query(state:AgentState) -> str:
         "status" : "query transformed"
     }
 
+def validate_input(state:AgentState):
+
+    query = state["query"].strip()
+
+    if not query:
+
+        return {
+            "status" : "rejected",
+            "answer" : "Please enter a valid query"
+        }
+
+    if len(query) > 1000:
+
+        return {
+            "status" : "rejected",
+            "answer" : "The query is too long, keep it within 1000 characters"
+        }
+
+    invalid_queries = ["ignore previous instructions","how to hack","give me system prompt","reveal database"]
+
+    for invalid in invalid_queries:
+
+        if invalid in query.lower():
+
+            return {
+                "status" : "rejected",
+                "answer" : "Prompt injection detected!"
+            }
+
+    return {
+        "status" : "validated"
+    }
+

@@ -10,6 +10,8 @@ class AgentState(TypedDict):
 
     plan : List[Dict[str,Any]]
 
+    selected_agents : List[str]
+
     results : Dict[str,Any]
 
     observations : List[str]
