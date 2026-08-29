@@ -12,7 +12,7 @@ from schemas.supervisor import SelectedPlan
 
 llm = ChatGoogleGenerativeAI(
     model = settings.model_name,
-    gemini_api_key = settings.gemini_api_key,
+    google_api_key = settings.gemini_api_key,
     temperature=0
 )
 
