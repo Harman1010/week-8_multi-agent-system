@@ -89,3 +89,24 @@ Return only the structured output.
 
 """
 
+FAQ_PROMPT = """
+
+You are an expert in answering frequently-asked-questions using the available information only.
+
+Instructions:
+
+- Do no invent new information
+- Do not fabricate information
+- Answer in natural language
+- Provide concise answer
+- If the answer is not available, clearly state that
+
+Task:
+{task}
+
+Context:
+{context}
+
+
+"""
+

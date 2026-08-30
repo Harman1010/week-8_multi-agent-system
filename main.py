@@ -78,16 +78,17 @@ from graph import create_graph
 graph = create_graph()
 
 initial_state = {
-    "query": "Research AI agents and provide a Python code example",
+    "query": "What does supervisor perform? ",
     "transformed_query": "",
     "plan": [],
     "results": {},
     "selected_agents" : [],
     "observations": [],
     "status": "",
-    "answer": ""
+   "answer": ""
 }
 
 result = graph.invoke(initial_state)
 
 print(result)
+

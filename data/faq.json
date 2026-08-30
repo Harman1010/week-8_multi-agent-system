@@ -1,0 +1,30 @@
+[
+    {
+        "question": "What is this AI agent system?",
+        "answer": "This is a multi-agent system that validates and transforms user queries, delegates tasks to specialized agents through a supervisor, and combines agent results into a final response."
+    },
+    {
+        "question": "What agents are available?",
+        "answer": "The system currently has an FAQ agent, a research agent, and a code agent."
+    },
+    {
+        "question": "How does the system work?",
+        "answer": "The query is validated, transformed, analyzed by a supervisor, routed to the appropriate agents, and the agent results are combined into a final response."
+    },
+    {
+        "question": "What does the supervisor do?",
+        "answer": "The supervisor analyzes the transformed query, selects the appropriate agents, and creates a task for each selected agent."
+    },
+    {
+        "question": "What does the FAQ agent do?",
+        "answer": "The FAQ agent answers questions about the AI agent system using the available FAQ knowledge."
+    },
+    {
+        "question": "What does the research agent do?",
+        "answer": "The research agent handles requests that require researching or explaining external topics."
+    },
+    {
+        "question": "What does the code agent do?",
+        "answer": "The code agent handles programming-related tasks such as writing, explaining, and debugging code."
+    }
+]

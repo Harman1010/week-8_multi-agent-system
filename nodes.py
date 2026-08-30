@@ -6,9 +6,13 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from utils.config import settings
 
-from utils.prompts import QUERY_TRANSFORMATION_PROMPT,SUPERVISOR_PROMPT
+from utils.prompts import QUERY_TRANSFORMATION_PROMPT,SUPERVISOR_PROMPT,FAQ_PROMPT
 
 from schemas.supervisor import SelectedPlan
+
+from utils.helpers import get_task_name,load_faq
+
+import json
 
 llm = ChatGoogleGenerativeAI(
     model = settings.model_name,
@@ -91,15 +95,6 @@ def supervisor(state:AgentState):
     }
 
 
-def faq_agent(state: AgentState):
-
-    return {
-        "results": {
-            "faq_agent": "FAQ agent executed"
-        }
-    }
-
-
 def research_agent(state: AgentState):
 
     return {
@@ -123,3 +118,37 @@ def final_response(state: AgentState):
         "answer": str(state["results"]),
         "status": "completed"
     }
+
+def faq_agent(state:AgentState):
+
+    task = get_task_name(state,"faq_agent")
+
+    faq_data = load_faq()
+
+    context = json.dumps(
+        faq_data,indent=2
+    )
+
+    print("TASK:")
+    print(task)
+
+    print("\nCONTEXT:")
+    print(context)
+
+    prompt = ChatPromptTemplate.from_template(
+        FAQ_PROMPT
+    )
+
+    chain = prompt | llm
+
+    response = chain.invoke({
+        "task" : task,
+        "context" : context
+    })
+
+    return {
+        "results": {
+            "faq_agent": response.content.strip()
+        }
+    }
+
