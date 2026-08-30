@@ -56,12 +56,29 @@
 #print(result["status"])
 #print(result["answer"])
 
+#from graph import create_graph
+
+#graph = create_graph()
+
+#initial_state = {
+ #   "query": "Explain langgraph in simple words",
+  #  "transformed_query": "",
+   # "plan": [],
+   # "results": {},
+    #"selected_agents" : [],
+    #"observations": [],
+    #"status": "",
+    #"answer": ""
+#}
+
+#print(graph.get_graph())
+
 from graph import create_graph
 
 graph = create_graph()
 
 initial_state = {
-    "query": "Explain langgraph in simple words",
+    "query": "Research AI agents and provide a Python code example",
     "transformed_query": "",
     "plan": [],
     "results": {},
@@ -71,4 +88,6 @@ initial_state = {
     "answer": ""
 }
 
-print(graph.get_graph())
+result = graph.invoke(initial_state)
+
+print(result)

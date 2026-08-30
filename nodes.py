@@ -91,3 +91,35 @@ def supervisor(state:AgentState):
     }
 
 
+def faq_agent(state: AgentState):
+
+    return {
+        "results": {
+            "faq_agent": "FAQ agent executed"
+        }
+    }
+
+
+def research_agent(state: AgentState):
+
+    return {
+        "results": {
+            "research_agent": "Research agent executed"
+        }
+    }
+
+
+def code_agent(state: AgentState):
+
+    return {
+        "results": {
+            "code_agent": "Code agent executed"
+        }
+    }
+
+def final_response(state: AgentState):
+
+    return {
+        "answer": str(state["results"]),
+        "status": "completed"
+    }

@@ -1,4 +1,12 @@
-from typing import TypedDict , Dict , Any , Optional, List
+from typing import TypedDict , Dict , Any , List, Annotated
+
+def merge_results(existing:Dict[str,Any],new:Dict[str,Any]):
+
+    return {
+        **existing,
+        **new
+    }
+
 
 class AgentState(TypedDict):
 
@@ -12,11 +20,9 @@ class AgentState(TypedDict):
 
     selected_agents : List[str]
 
-    results : Dict[str,Any]
+    results : Annotated[Dict[str,Any],merge_results]
 
     observations : List[str]
-
-    agents_selected : List[str]
 
     num_iterations : int
 
