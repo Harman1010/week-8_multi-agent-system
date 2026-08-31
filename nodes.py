@@ -23,7 +23,7 @@ llm = ChatGoogleGenerativeAI(
     temperature=0
 )
 
-def transform_query(state:AgentState) -> str:
+def transform_query(state:AgentState) -> dict:
 
     prompt = ChatPromptTemplate.from_template(
         QUERY_TRANSFORMATION_PROMPT
@@ -100,62 +100,90 @@ def supervisor(state:AgentState):
 
 def research_agent(state: AgentState):
 
-    task = get_task_name(state,"research_agent")
+    try:
+        task = get_task_name(
+            state,
+            "research_agent"
+        )
 
-    wikipedia = search_wikipedia(task)
+        wikipedia_result = search_wikipedia(task)
+        arxiv_result = search_arxiv(task)
+        duckduckgo_result = search_duckduckgo(task)
 
-    arxiv = search_arxiv(task)
-
-    duckduckgo = search_duckduckgo(task)
-
-    context = f"""
-
+        context = f"""
 Wikipedia:
-{wikipedia}
+{wikipedia_result}
 
-Arxiv:
-{arxiv}
+ArXiv:
+{arxiv_result}
 
-Duckduckgo:
-{duckduckgo}
-
-
+DuckDuckGo:
+{duckduckgo_result}
 """
-    prompt = ChatPromptTemplate.from_template(
-        RESEARCH_PROMPT
-    )
 
-    chain = prompt | llm
+        # Check whether all sources failed
+        if (
+            not wikipedia_result
+            and not arxiv_result
+            and not duckduckgo_result
+        ):
 
-    response = chain.invoke({
-        "task" : task,
-        "context" : context
-    })
+            return {
+                "failed_agents": ["research_agent"],
+                "errors": ["All research sources failed."]
+            }
 
-    return {
-        "results" : {
-            "research_agent" : response.content.strip()
+        prompt = ChatPromptTemplate.from_template(
+            RESEARCH_PROMPT
+        )
+
+        chain = prompt | llm
+
+        response = chain.invoke({
+            "task": task,
+            "context": context
+        })
+
+        return {
+            "results": {
+                "research_agent": response.content.strip()
+            }
         }
-    }
+
+    except Exception as e:
+
+        return {
+            "failed_agents": ["research_agent"],
+            "errors": [str(e)]
+        }
+    
 def code_agent(state: AgentState):
 
-    task = get_task_name(state,"code_agent")
+    try:
+        task = get_task_name(state,"code_agent")
 
-    prompt = ChatPromptTemplate.from_template(
-        CODE_AGENT
-    )
+        prompt = ChatPromptTemplate.from_template(
+            CODE_AGENT
+        )
 
-    chain = prompt | llm
+        chain = prompt | llm
 
-    response = chain.invoke({
-        "task" : task
-    })
+        response = chain.invoke({
+            "task" : task
+        })
 
-    return {
-        "results" : {
-            "code_agent" : response.content.strip()
+        return {
+            "results" : {
+                "code_agent" : response.content.strip()
+            }
         }
-    }
+
+    except Exception as e:
+
+        return {
+            "failed_agents": ["code_agent"],
+            "errors": [str(e)]
+        }
 
 def final_response(state: AgentState):
 
@@ -177,34 +205,97 @@ def final_response(state: AgentState):
 
 def faq_agent(state:AgentState):
 
-    task = get_task_name(state,"faq_agent")
+    try:
 
-    faq_data = load_faq()
+        task = get_task_name(state,"faq_agent")
 
-    context = json.dumps(
-        faq_data,indent=2
+        faq_data = load_faq()
+
+        context = json.dumps(
+            faq_data,indent=2
+        )
+
+        print("TASK:")
+        print(task)
+
+        print("\nCONTEXT:")
+        print(context)
+
+        prompt = ChatPromptTemplate.from_template(
+            FAQ_PROMPT
+        )
+
+        chain = prompt | llm
+
+        response = chain.invoke({
+            "task" : task,
+            "context" : context
+        })
+
+        return {
+            "results": {
+                "faq_agent": response.content.strip()
+            }
+        }
+
+    except Exception as e:
+
+        return {
+            "failed_agents": ["faq_agent"],
+            "errors": [str(e)]
+        }
+
+def validate_results(state: AgentState):
+
+    selected_agents = state.get("selected_agents", [])
+    results = state.get("results", {})
+
+    successful_agents = list(results.keys())
+
+    all_agents_succeeded = all(
+        agent in successful_agents
+        for agent in selected_agents
     )
 
-    print("TASK:")
-    print(task)
+    if all_agents_succeeded:
 
-    print("\nCONTEXT:")
-    print(context)
+        return {
+            "status": "validated_results"
+        }
 
-    prompt = ChatPromptTemplate.from_template(
-        FAQ_PROMPT
-    )
+    if results:
 
-    chain = prompt | llm
-
-    response = chain.invoke({
-        "task" : task,
-        "context" : context
-    })
+        return {
+            "status": "partial_failure"
+        }
 
     return {
-        "results": {
-            "faq_agent": response.content.strip()
-        }
+        "status": "failed"
     }
 
+MAX_RECOVERY_ATTEMPTS = 2
+
+
+def recovery_node(state: AgentState):
+
+    recovery_iterations = state.get(
+        "recovery_iterations",
+        0
+    )
+
+    failed_agents = state.get(
+        "failed_agents",
+        []
+    )
+
+    if not failed_agents or recovery_iterations >= MAX_RECOVERY_ATTEMPTS:
+
+        return {
+            "status" : "recovery_failed"
+        }
+
+    return {
+        "retry_agents": failed_agents,
+        "recovery_iterations": recovery_iterations + 1,
+        "status": "retrying"
+    }

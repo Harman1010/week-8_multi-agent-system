@@ -7,6 +7,10 @@ def merge_results(existing:Dict[str,Any],new:Dict[str,Any]):
         **new
     }
 
+def merge_lists(existing: list, new: list):
+
+    return existing + new
+
 
 class AgentState(TypedDict):
 
@@ -20,13 +24,19 @@ class AgentState(TypedDict):
 
     selected_agents : List[str]
 
+    failed_agents : Annotated[List[str],merge_lists]
+
+    retry_agents : List[str]
+
     results : Annotated[Dict[str,Any],merge_results]
 
     observations : List[str]
 
+    errors : Annotated[List[str],merge_lists]
+
     num_iterations : int
 
-    recovery_iterations : int #Error
+    recovery_iterations : int
 
     status : str
 

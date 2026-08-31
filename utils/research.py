@@ -10,8 +10,8 @@ def search_wikipedia(query:str) -> str:
 
     except Exception as e:
         print(f"Wikipedia search failed: {e}")
-        return "No Wikipedia information available."
-
+        return ""
+    
 import arxiv
 
 
@@ -44,7 +44,7 @@ def search_arxiv(query: str) -> str:
 
     except Exception as e:
         print(f"ArXiv search failed: {e}")
-        return "No ArXiv information available."
+        return ""
 
 def search_duckduckgo(query:str) -> str:
 
@@ -54,4 +54,4 @@ def search_duckduckgo(query:str) -> str:
 
     except Exception as e:
         print(f"Duckduckgo search failed: {e}")
-        return "No Duckduckgo information available."
+        return ""
