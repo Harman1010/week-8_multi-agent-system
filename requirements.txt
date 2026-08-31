@@ -1,5 +1,6 @@
 langchain
 langchain-core
+langchain-community
 langchain-google-genai
 
 langgraph
@@ -9,3 +10,9 @@ python-dotenv
 fastapi
 
 uvicorn
+
+wikipedia
+
+ddgs
+
+arxiv

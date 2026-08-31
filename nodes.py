@@ -6,11 +6,14 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from utils.config import settings
 
-from utils.prompts import QUERY_TRANSFORMATION_PROMPT,SUPERVISOR_PROMPT,FAQ_PROMPT
+from utils.prompts import (QUERY_TRANSFORMATION_PROMPT,SUPERVISOR_PROMPT,FAQ_PROMPT,RESEARCH_PROMPT,CODE_AGENT,
+FINAL_RESPONSE_PROMPT)
 
 from schemas.supervisor import SelectedPlan
 
 from utils.helpers import get_task_name,load_faq
+
+from utils.research import search_wikipedia,search_arxiv,search_duckduckgo
 
 import json
 
@@ -97,25 +100,78 @@ def supervisor(state:AgentState):
 
 def research_agent(state: AgentState):
 
+    task = get_task_name(state,"research_agent")
+
+    wikipedia = search_wikipedia(task)
+
+    arxiv = search_arxiv(task)
+
+    duckduckgo = search_duckduckgo(task)
+
+    context = f"""
+
+Wikipedia:
+{wikipedia}
+
+Arxiv:
+{arxiv}
+
+Duckduckgo:
+{duckduckgo}
+
+
+"""
+    prompt = ChatPromptTemplate.from_template(
+        RESEARCH_PROMPT
+    )
+
+    chain = prompt | llm
+
+    response = chain.invoke({
+        "task" : task,
+        "context" : context
+    })
+
     return {
-        "results": {
-            "research_agent": "Research agent executed"
+        "results" : {
+            "research_agent" : response.content.strip()
         }
     }
-
-
 def code_agent(state: AgentState):
 
+    task = get_task_name(state,"code_agent")
+
+    prompt = ChatPromptTemplate.from_template(
+        CODE_AGENT
+    )
+
+    chain = prompt | llm
+
+    response = chain.invoke({
+        "task" : task
+    })
+
     return {
-        "results": {
-            "code_agent": "Code agent executed"
+        "results" : {
+            "code_agent" : response.content.strip()
         }
     }
 
 def final_response(state: AgentState):
 
+    prompt = ChatPromptTemplate.from_template(
+        FINAL_RESPONSE_PROMPT
+    )
+
+    chain = prompt | llm
+
+    response = chain.invoke({
+        "query": state["query"],
+        "results": state["results"]
+    })
+
     return {
-        "answer": str(state["results"]),
+        "answer": response.content.strip(),
         "status": "completed"
     }
 

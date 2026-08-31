@@ -78,7 +78,7 @@ from graph import create_graph
 graph = create_graph()
 
 initial_state = {
-    "query": "What does supervisor perform? ",
+    "query": "Write a Python function to check whether a number is prime",
     "transformed_query": "",
     "plan": [],
     "results": {},
