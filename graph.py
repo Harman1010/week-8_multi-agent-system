@@ -14,7 +14,10 @@ def route_after_validation(state:AgentState):
 
 def route_after_supervisor(state:AgentState):
 
-    return state["selected_agents"]
+    if state["status"] == "task delegated":
+        return state["selected_agents"]
+
+    return "final_response"
 
 def route_after_result_validation(state: AgentState):
 
@@ -25,6 +28,13 @@ def route_after_result_validation(state: AgentState):
 
     if status in ["partial_failure", "failed"]:
         return "recovery_node"
+
+    return "final_response"
+
+def route_after_transformation(state: AgentState):
+
+    if state["status"] == "query transformed":
+        return "supervisor"
 
     return "final_response"
 
@@ -61,7 +71,7 @@ def create_graph():
 
     builder.add_conditional_edges("queryDetector",route_after_validation)
 
-    builder.add_edge("queryTransformer","supervisor")
+    builder.add_conditional_edges("queryTransformer",route_after_transformation)
 
     builder.add_conditional_edges("supervisor",route_after_supervisor)
 

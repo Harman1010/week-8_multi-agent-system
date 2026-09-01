@@ -25,22 +25,38 @@ llm = ChatGoogleGenerativeAI(
 
 def transform_query(state:AgentState) -> dict:
 
-    prompt = ChatPromptTemplate.from_template(
-        QUERY_TRANSFORMATION_PROMPT
-    )
+    try:
+        prompt = ChatPromptTemplate.from_template(
+            QUERY_TRANSFORMATION_PROMPT
+        )
 
-    chain = prompt | llm
+        chain = prompt | llm
 
-    response = chain.invoke({
-        "query" : state["query"]
-    })
+        response = chain.invoke({
+            "query" : state["query"]
+        })
 
-    transformed_query = response.content.strip()
+        transformed_query = response.content.strip()
 
-    return {
-        "transformed_query" : transformed_query,
-        "status" : "query transformed"
-    }
+        if not transformed_query:
+            return {
+                "status": "failed",
+                "errors": [
+                    "Query transformation returned an empty result."
+                ]
+            }
+
+        return {
+            "transformed_query": transformed_query,
+            "status": "query transformed"
+        }
+
+    except Exception as e:
+
+        return {
+            "status" : "failed",
+            "errors" : [str(e)]
+        }
 
 def validate_input(state:AgentState):
 
@@ -79,23 +95,31 @@ structured_llm = llm.with_structured_output(SelectedPlan)
 
 def supervisor(state:AgentState):
 
-    prompt = ChatPromptTemplate.from_template(
+    try:
+        prompt = ChatPromptTemplate.from_template(
         SUPERVISOR_PROMPT)
 
-    chain = prompt | structured_llm
+        chain = prompt | structured_llm
 
-    response = chain.invoke({
-        "query" : state["transformed_query"]
-    })
+        response = chain.invoke({
+            "query" : state["transformed_query"]
+        })
 
-    return {
-        "selected_agents" : response.selected_agents,
-        "plan" : [
-            step.model_dump()
-            for step in response.plan
-        ],
-        "status" : "task delegated"
-    }
+        return {
+            "selected_agents" : response.selected_agents,
+            "plan" : [
+                step.model_dump()
+                for step in response.plan
+            ],
+            "status" : "task delegated"
+        }
+
+    except Exception as e:
+
+        return {
+            "status": "failed",
+            "errors": [str(e)]
+        }
 
 
 def research_agent(state: AgentState):
@@ -187,21 +211,49 @@ def code_agent(state: AgentState):
 
 def final_response(state: AgentState):
 
-    prompt = ChatPromptTemplate.from_template(
-        FINAL_RESPONSE_PROMPT
-    )
+    try:
 
-    chain = prompt | llm
+        results = state.get("results",{})
 
-    response = chain.invoke({
-        "query": state["query"],
-        "results": state["results"]
-    })
+        if not results:
 
-    return {
-        "answer": response.content.strip(),
-        "status": "completed"
-    }
+            errors = state.get("errors",[])
+
+            if errors:
+
+                return {
+                    "answer" : "I was unable to complete your request" + errors[-1],
+                    "status" : "completed"
+                }
+
+            return {
+                "answer" : "I was unable to find enough information",
+                "status" : "completed"
+            }
+        
+        prompt = ChatPromptTemplate.from_template(
+            FINAL_RESPONSE_PROMPT
+        )
+
+        chain = prompt | llm
+
+        response = chain.invoke({
+            "query": state["query"],
+            "results": state["results"]
+        })
+
+        return {
+            "answer": response.content.strip(),
+            "status": "completed"
+        }
+
+    except Exception as e:
+
+        return {
+            "answer" : "The system completed the agent processing but was unable to generate the final response.",
+            "status" : "completed",
+            "errors" : [str(e)]
+        }
 
 def faq_agent(state:AgentState):
 
