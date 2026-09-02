@@ -44,15 +44,90 @@ Agents available :-
 
 ## Architecture
 
-User Query │ ▼ Input Validation │ ├── Invalid ──► Final Response / Rejection │ ▼ Query Transformation │ ▼ Supervisor │ ▼ Task Planning & Agent Delegation │ ├───────────────┬───────────────┐ ▼ ▼ ▼ FAQ Agent Research Agent Code Agent │ │ │ └───────────────┼───────────────┘ ▼ Result Validation │ ┌─────────┴──────────┐ ▼ ▼ Success Partial / Failed │ │ ▼ ▼ Final Response Recovery Node │ ┌─────────┴─────────┐ ▼ ▼ Retry Agents Recovery Failed │ │ └─────────┬─────────┘ ▼ Final Response │ ▼ END
+```text
+User Query
+    │
+    ▼
+Input Validation
+    │
+    ├── Invalid ──► Final Response / Rejection
+    │
+    ▼
+Query Transformation
+    │
+    ▼
+Supervisor
+    │
+    ▼
+Task Planning & Agent Delegation
+    │
+    ├───────────────┬───────────────┐
+    ▼               ▼               ▼
+FAQ Agent      Research Agent    Code Agent
+    │               │               │
+    └───────────────┼───────────────┘
+                    ▼
+             Result Validation
+                    │
+          ┌─────────┴──────────┐
+          ▼                    ▼
+      Success          Partial / Failed
+          │                    │
+          ▼                    ▼
+    Final Response       Recovery Node
+                               │
+                     ┌─────────┴─────────┐
+                     ▼                   ▼
+                Retry Agents       Recovery Failed
+                     │                   │
+                     └─────────┬─────────┘
+                               ▼
+                         Final Response
+                               │
+                               ▼
+                              END
+
+```
 
 ---
 
+
 ## Project Structure
 
-project/ │ ├── backend/ │ ├── main.py │ └── schema.py │ ├── frontend/ │ ├── index.html │ ├── style.css │ └── script.js │ ├── state.py ├── nodes.py ├── graph.py │ ├── utils/ │ ├── config.py │ ├── prompts.py │ ├── helpers.py │ └── research.py │ ├── schemas/ │ └── supervisor.py │ ├── .env.example ├── requirements.txt └── README.md
+```text
+project/
+│
+├── backend/
+│   ├── __init__.py
+│   ├── main.py
+│   └── schema.py
+│
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+│
+├── schemas/
+│   ├── __init__.py
+│   └── supervisor.py
+│
+├── utils/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── prompts.py
+│   ├── helpers.py
+│   └── research.py
+│
+├── state.py
+├── nodes.py
+├── graph.py
+|── test.py
+│
+├── .env.example
+├── requirements.txt
+└── README.md
 
-Note: The core aspect is intentionally kept as flat. Further refactoring can mean they land in core/agent module.
+```
 
 ---
 
