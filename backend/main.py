@@ -1,5 +1,9 @@
 from fastapi import FastAPI, HTTPException
 
+from fastapi.staticfiles import StaticFiles
+
+from fastapi.responses import FileResponse
+
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.schema import AgentRequest, AgentResponse
@@ -7,6 +11,12 @@ from backend.schema import AgentRequest, AgentResponse
 from graph import create_graph
 
 app = FastAPI()
+
+app.mount(
+    "/static",
+    StaticFiles(directory="frontend"),
+    name="static"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,11 +29,9 @@ app.add_middleware(
 graph = create_graph()
 
 @app.get("/")
-def get_health():
+def get_home():
 
-    return {
-        "status" : "running"
-    }
+    return FileResponse("frontend/index.html")
 
 @app.post("/chat",response_model=AgentResponse)
 def get_answer(request:AgentRequest):
