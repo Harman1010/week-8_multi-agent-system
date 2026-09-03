@@ -6,11 +6,15 @@ validate_results,recovery_node)
 
 def route_after_validation(state:AgentState):
 
-    if state["status"] == "validated":
+    if state["status"] != "validated":
+
+        return END
+
+    if state.get("needs_transformation",False):
 
         return "queryTransformer"
 
-    return END
+    return "supervisor"
 
 def route_after_supervisor(state:AgentState):
 

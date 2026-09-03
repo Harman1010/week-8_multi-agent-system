@@ -30,6 +30,8 @@ class AgentState(TypedDict):
 
     results : Annotated[Dict[str,Any],merge_results]
 
+    needs_transformation : bool
+
     observations : List[str]
 
     errors : Annotated[List[str],merge_lists]

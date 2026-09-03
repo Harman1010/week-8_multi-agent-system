@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from state import AgentState
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -88,10 +90,30 @@ def validate_input(state:AgentState):
             }
 
     return {
-        "status" : "validated"
+        "status": "validated",
+        "needs_transformation": is_vague_query(query)
     }
 
 structured_llm = llm.with_structured_output(SelectedPlan)
+
+def is_vague_query(query: str) -> bool:
+
+    vague_patterns = [
+        "tell me about it",
+        "explain it",
+        "what about it",
+        "help me with this",
+        "what is this",
+        "explain this",
+        "tell me more",
+    ]
+
+    query_lower = query.lower().strip()
+
+    return any(
+        pattern in query_lower
+        for pattern in vague_patterns
+    )
 
 def supervisor(state:AgentState):
 
@@ -101,8 +123,10 @@ def supervisor(state:AgentState):
 
         chain = prompt | structured_llm
 
+        query = state.get("transformed_query",state["query"])
+
         response = chain.invoke({
-            "query" : state["transformed_query"]
+            "query" : query
         })
 
         return {
@@ -125,27 +149,44 @@ def supervisor(state:AgentState):
 def research_agent(state: AgentState):
 
     try:
+
         task = get_task_name(
             state,
             "research_agent"
         )
 
-        wikipedia_result = search_wikipedia(task)
-        arxiv_result = search_arxiv(task)
-        duckduckgo_result = search_duckduckgo(task)
+        with ThreadPoolExecutor(max_workers=3) as executor:
+
+            wikipedia_future = executor.submit(
+            search_wikipedia,
+            task
+        )
+
+            arxiv_future = executor.submit(
+                search_arxiv,
+                task
+            )
+
+            duckduckgo_future = executor.submit(
+                search_duckduckgo,
+                task
+            )
+
+        wikipedia_result = wikipedia_future.result()
+        arxiv_result = arxiv_future.result()
+        duckduckgo_result = duckduckgo_future.result()
 
         context = f"""
-Wikipedia:
-{wikipedia_result}
+    Wikipedia:
+    {wikipedia_result}
 
-ArXiv:
-{arxiv_result}
+    ArXiv:
+    {arxiv_result}
 
-DuckDuckGo:
-{duckduckgo_result}
-"""
-
-        # Check whether all sources failed
+    DuckDuckGo:
+    {duckduckgo_result}
+    """
+        
         if (
             not wikipedia_result
             and not arxiv_result
@@ -175,7 +216,7 @@ DuckDuckGo:
         }
 
     except Exception as e:
-
+    
         return {
             "failed_agents": ["research_agent"],
             "errors": [str(e)]
@@ -211,25 +252,28 @@ def code_agent(state: AgentState):
 
 def final_response(state: AgentState):
 
+    results = state.get("results",{})
+
+    selected_agents = state.get("selected_agents",[])
+
+    if len(selected_agents) == 1 and selected_agents[0] in results:
+
+        agent = selected_agents[0]
+
+        return {
+            "answer" : results[agent],
+            "status" : "completed"
+        }
+
+    if not results:
+
+        return {
+            "answer" : "I was unable to generate an answer as no agent produced a result",
+            "status" : "completed"
+        }
+
+
     try:
-
-        results = state.get("results",{})
-
-        if not results:
-
-            errors = state.get("errors",[])
-
-            if errors:
-
-                return {
-                    "answer" : "I was unable to complete your request" + errors[-1],
-                    "status" : "completed"
-                }
-
-            return {
-                "answer" : "I was unable to find enough information",
-                "status" : "completed"
-            }
         
         prompt = ChatPromptTemplate.from_template(
             FINAL_RESPONSE_PROMPT
@@ -248,6 +292,8 @@ def final_response(state: AgentState):
         }
 
     except Exception as e:
+
+        print("Final Response Error",repr(e))
 
         return {
             "answer" : "The system completed the agent processing but was unable to generate the final response.",
