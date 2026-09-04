@@ -19,6 +19,8 @@ from utils.research import search_wikipedia,search_arxiv,search_duckduckgo
 
 import json
 
+from utils.helpers import is_retryable_error
+
 llm = ChatGoogleGenerativeAI(
     model = settings.model_name,
     google_api_key = settings.gemini_api_key,
@@ -185,7 +187,7 @@ def research_agent(state: AgentState):
     
         return {
             "failed_agents": ["research_agent"],
-            "errors": [str(e)]
+            "errors": [f"research_agent: {str(e)}"]
         }
     
 def code_agent(state: AgentState):
@@ -213,7 +215,7 @@ def code_agent(state: AgentState):
 
         return {
             "failed_agents": ["code_agent"],
-            "errors": [str(e)]
+            "errors": [f"code_agent: {str(e)}"]
         }
 
 def final_response(state: AgentState):
@@ -229,6 +231,24 @@ def final_response(state: AgentState):
         return {
             "answer" : results[agent],
             "status" : "completed"
+        }
+
+    if state.get("status") == "recovery_failed":
+
+        errors = state.get("errors", [])
+
+        if errors:
+            return {
+                "answer": (
+                    "The request could not be completed because "
+                    "the agent encountered a non-retryable error."
+                ),
+                "status": "completed"
+            }
+
+        return {
+            "answer": "The request could not be completed.",
+            "status": "completed"
         }
 
     if not results:
@@ -306,7 +326,7 @@ def faq_agent(state:AgentState):
 
         return {
             "failed_agents": ["faq_agent"],
-            "errors": [str(e)]
+            "errors": [f"faq_agent: {str(e)}"]
         }
 
 def validate_results(state: AgentState):
@@ -352,14 +372,60 @@ def recovery_node(state: AgentState):
         []
     )
 
+    errors = state.get(
+        "errors",
+        []
+    )
+
     if not failed_agents or recovery_iterations >= MAX_RECOVERY_ATTEMPTS:
 
         return {
             "status" : "recovery_failed"
         }
 
+    retry_agents = []
+
+    for agent in failed_agents:
+
+        for error in errors:
+
+            if is_retryable_error(error):
+
+                retry_agents.append(agent)
+
+                break
+
+    if not retry_agents:
+
+        return {
+            "status" : "recovery_failed"
+        }
+
+    retry_agents = []
+
+    for agent in failed_agents:
+
+        agent_errors = [
+            error
+            for error in errors
+            if error.startswith(f"{agent}:")
+        ]
+
+        for error in agent_errors:
+
+            if is_retryable_error(error):
+
+                retry_agents.append(agent)
+                break
+
+    if not retry_agents:
+
+        return {
+            "status": "recovery_failed"
+        }
+
     return {
-        "retry_agents": failed_agents,
+        "retry_agents": retry_agents,
         "recovery_iterations": recovery_iterations + 1,
         "status": "retrying"
     }
