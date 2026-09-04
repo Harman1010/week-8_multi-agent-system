@@ -18,8 +18,6 @@ class AgentState(TypedDict):
 
     query : str
 
-    transformed_query : str
-
     plan : List[Dict[str,Any]]
 
     selected_agents : List[str]
@@ -29,8 +27,6 @@ class AgentState(TypedDict):
     retry_agents : List[str]
 
     results : Annotated[Dict[str,Any],merge_results]
-
-    needs_transformation : bool
 
     observations : List[str]
 

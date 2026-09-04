@@ -47,9 +47,8 @@ def get_answer(request:AgentRequest):
 
         return response
 
-    except Exception:
+    except Exception as e:
 
-        raise HTTPException(
-            status_code=500,
-            detail="Sorry,Unable to process your request due to Internal Server Error."
-        )
+        print("ERROR:", repr(e))
+
+        raise

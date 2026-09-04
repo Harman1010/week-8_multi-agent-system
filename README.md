@@ -16,11 +16,12 @@ Agents available :-
 
 - Agentic AI System - Uses multiple specialized agents to handle different types of queries.
 - Supervisor Agent - Plans tasks and delegates them to the appropriate specialized agents.
-- Query Transformation - Transforms user queries before task planning and delegation.
+- Query Clarification - Detects vague or ambiguous queries and asks the user to provide a clearer query before execution.
 - Input Guardrails - Performs basic validation and filtering of user queries.
 - Result Validation - Validates whether the selected agents successfully produced results.
 - Recovery Mechanism - Retries failed agents up to a defined recovery limit.
 - Multi-Agent Routing - Routes tasks dynamically based on the supervisor's selected agents.
+- Efficient Response Handling - Single-agent queries return the agent's validated result directly, avoiding an unnecessary final LLM call. Multi-agent results are synthesized when required.
 
 ---
 
@@ -45,18 +46,18 @@ Agents available :-
 ## Architecture
 
 ```text
+
 User Query
     │
     ▼
 Input Validation
     │
-    ├── Invalid ──► Final Response / Rejection
-    │
-    ▼
-Query Transformation
+    ├── Invalid ──► Rejection
     │
     ▼
 Supervisor
+    │
+    ├── Clarify ──► Clarification Response ──► END
     │
     ▼
 Task Planning & Agent Delegation
@@ -136,20 +137,23 @@ project/
 
 1. Clone the repository
 
-2. Add .env file (refer to .env.example) and add your API Key
+2. Add `.env` file (refer to `.env.example`) and add your API Key.
 
-3. Run the backend
+3. Install dependencies:
 
 ```powershell
-
-uvicorn backend.main:app
-
+pip install -r requirements.txt
 ```
 
-4. Run the frontend
+4. Run the application
 
-- Live Server (not recommended since it reloads automatically)
-- Open integrated browser from "frontend/index.html" if using VS Code or similar editor
+```powershell
+uvicorn backend.main:app --reload
+```
+
+5. Open the application at:
+
+http://127.0.0.1:8000
 
 ---
 

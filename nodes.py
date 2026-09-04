@@ -8,7 +8,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from utils.config import settings
 
-from utils.prompts import (QUERY_TRANSFORMATION_PROMPT,SUPERVISOR_PROMPT,FAQ_PROMPT,RESEARCH_PROMPT,CODE_AGENT,
+from utils.prompts import (SUPERVISOR_PROMPT,FAQ_PROMPT,RESEARCH_PROMPT,CODE_AGENT,
 FINAL_RESPONSE_PROMPT)
 
 from schemas.supervisor import SelectedPlan
@@ -24,41 +24,6 @@ llm = ChatGoogleGenerativeAI(
     google_api_key = settings.gemini_api_key,
     temperature=0
 )
-
-def transform_query(state:AgentState) -> dict:
-
-    try:
-        prompt = ChatPromptTemplate.from_template(
-            QUERY_TRANSFORMATION_PROMPT
-        )
-
-        chain = prompt | llm
-
-        response = chain.invoke({
-            "query" : state["query"]
-        })
-
-        transformed_query = response.content.strip()
-
-        if not transformed_query:
-            return {
-                "status": "failed",
-                "errors": [
-                    "Query transformation returned an empty result."
-                ]
-            }
-
-        return {
-            "transformed_query": transformed_query,
-            "status": "query transformed"
-        }
-
-    except Exception as e:
-
-        return {
-            "status" : "failed",
-            "errors" : [str(e)]
-        }
 
 def validate_input(state:AgentState):
 
@@ -90,8 +55,7 @@ def validate_input(state:AgentState):
             }
 
     return {
-        "status": "validated",
-        "needs_transformation": is_vague_query(query)
+        "status": "validated"
     }
 
 structured_llm = llm.with_structured_output(SelectedPlan)
@@ -123,7 +87,7 @@ def supervisor(state:AgentState):
 
         chain = prompt | structured_llm
 
-        query = state.get("transformed_query",state["query"])
+        query = state["query"]
 
         response = chain.invoke({
             "query" : query

@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 
 from state import AgentState
-from nodes import (transform_query,validate_input,supervisor,faq_agent,research_agent,code_agent,final_response,
+from nodes import (validate_input,supervisor,faq_agent,research_agent,code_agent,final_response,
 validate_results,recovery_node)
 
 def route_after_validation(state:AgentState):
@@ -10,19 +10,12 @@ def route_after_validation(state:AgentState):
 
         return END
 
-    if state.get("needs_transformation",False):
-
-        return "queryTransformer"
-
     return "supervisor"
 
 def route_after_supervisor(state:AgentState):
 
     if state["decision"] == "route":
         return state["selected_agents"]
-
-    elif state["decision"] == "transform":
-        return "queryTransformer"
 
     elif state["decision"] == "clarify":
 
@@ -45,17 +38,9 @@ def route_after_result_validation(state: AgentState):
 def clarification_node(state:AgentState):
 
     return {
-        "clarification_question" : state["clarification_question"],
+        "answer" : state["clarification_question"],
         "status" : "completed"
     }
-
-def route_after_transformation(state: AgentState):
-
-    if state["status"] == "query transformed":
-        return "supervisor"
-
-    return "final_response"
-
 
 def route_after_recovery(state: AgentState):
 
@@ -75,7 +60,6 @@ def create_graph():
     builder = StateGraph(AgentState)
 
     builder.add_node("queryDetector",validate_input)
-    builder.add_node("queryTransformer",transform_query)
     builder.add_node("supervisor",supervisor)
     builder.add_node("faq_agent",faq_agent)
     builder.add_node("research_agent",research_agent)
@@ -89,8 +73,6 @@ def create_graph():
     builder.add_edge(START,"queryDetector")
 
     builder.add_conditional_edges("queryDetector",route_after_validation)
-
-    builder.add_conditional_edges("queryTransformer",route_after_transformation)
 
     builder.add_conditional_edges("supervisor",route_after_supervisor)
 

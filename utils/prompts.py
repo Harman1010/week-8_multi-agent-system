@@ -1,21 +1,3 @@
-QUERY_TRANSFORMATION_PROMPT = """
-
-You are an expert in query rewriting.
-
-You need to transform the given query using the following instructions:-
-
-1. Preserve original meaning.
-2. Provide a clearer perspective
-3. Keep the query concise
-4. Do not invent new information
-5. Do not answer the question
-6. Return only the transformed query.
-
-Query:
-{query}
-
-"""
-
 SUPERVISOR_PROMPT = """
 
 You are a supervisor responsible for analyzing a user query and deciding
@@ -188,6 +170,28 @@ For a clarification request:
 
 
 Return only the structured output.
+
+"""
+
+FAQ_PROMPT = """
+
+
+You are an expert in answering frequently-asked-questions using the available information only.
+
+Instructions:
+
+- Do no invent new information
+- Do not fabricate information
+- Answer in natural language
+- Provide concise answer
+- If the answer is not available, clearly state that
+
+Task:
+{task}
+
+Context:
+{context}
+
 
 """
 
