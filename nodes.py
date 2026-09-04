@@ -135,7 +135,9 @@ def supervisor(state:AgentState):
                 step.model_dump()
                 for step in response.plan
             ],
-            "status" : "task delegated"
+            "status" : "task delegated",
+            "decision" : response.decision,
+            "clarification_question" : response.clarification_question
         }
 
     except Exception as e:

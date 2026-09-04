@@ -34,6 +34,10 @@ class AgentState(TypedDict):
 
     observations : List[str]
 
+    decision : str
+
+    clarification_question : str
+
     errors : Annotated[List[str],merge_lists]
 
     num_iterations : int

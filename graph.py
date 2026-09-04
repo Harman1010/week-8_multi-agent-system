@@ -18,8 +18,15 @@ def route_after_validation(state:AgentState):
 
 def route_after_supervisor(state:AgentState):
 
-    if state["status"] == "task delegated":
+    if state["decision"] == "route":
         return state["selected_agents"]
+
+    elif state["decision"] == "transform":
+        return "queryTransformer"
+
+    elif state["decision"] == "clarify":
+
+        return "clarification_node"
 
     return "final_response"
 
@@ -34,6 +41,13 @@ def route_after_result_validation(state: AgentState):
         return "recovery_node"
 
     return "final_response"
+
+def clarification_node(state:AgentState):
+
+    return {
+        "clarification_question" : state["clarification_question"],
+        "status" : "completed"
+    }
 
 def route_after_transformation(state: AgentState):
 
@@ -69,6 +83,7 @@ def create_graph():
     builder.add_node("final_response",final_response)
     builder.add_node("validate_results",validate_results)
     builder.add_node("recovery_node",recovery_node)
+    builder.add_node("clarification_node",clarification_node)
    
 
     builder.add_edge(START,"queryDetector")
@@ -92,6 +107,8 @@ def create_graph():
     builder.add_edge("faq_agent", "validate_results")
     builder.add_edge("research_agent", "validate_results")
     builder.add_edge("code_agent", "validate_results")
+
+    builder.add_edge("clarification_node",END)
 
     builder.add_edge("final_response", END)
 
