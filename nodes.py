@@ -220,6 +220,14 @@ def code_agent(state: AgentState):
 
 def final_response(state: AgentState):
 
+    if state.get("status") == "failed":
+
+        return {
+            "answer" : "There was an issue with the delegation. Please try again.",
+            "status" : "completed"
+        }
+
+
     results = state.get("results",{})
 
     selected_agents = state.get("selected_agents",[])
@@ -378,24 +386,6 @@ def recovery_node(state: AgentState):
     )
 
     if not failed_agents or recovery_iterations >= MAX_RECOVERY_ATTEMPTS:
-
-        return {
-            "status" : "recovery_failed"
-        }
-
-    retry_agents = []
-
-    for agent in failed_agents:
-
-        for error in errors:
-
-            if is_retryable_error(error):
-
-                retry_agents.append(agent)
-
-                break
-
-    if not retry_agents:
 
         return {
             "status" : "recovery_failed"

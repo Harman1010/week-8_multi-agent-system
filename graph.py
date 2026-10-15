@@ -14,6 +14,10 @@ def route_after_validation(state:AgentState):
 
 def route_after_supervisor(state:AgentState):
 
+    if state.get("status") == "failed":
+
+        return "final_response"
+
     if state["decision"] == "route":
         return state["selected_agents"]
 
