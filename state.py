@@ -22,7 +22,7 @@ class AgentState(TypedDict):
 
     selected_agents : List[str]
 
-    failed_agents : Annotated[List[str],merge_lists]
+    failed_agents : List[str]
 
     retry_agents : List[str]
 
@@ -39,6 +39,10 @@ class AgentState(TypedDict):
     num_iterations : int
 
     recovery_iterations : int
+
+    agent_statuses : Annotated[Dict[str,str], merge_results]
+
+    agent_errors : Annotated[Dict[str,str], merge_results]
 
     status : str
 

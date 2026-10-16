@@ -116,11 +116,13 @@ def supervisor(state:AgentState):
 
 def research_agent(state: AgentState):
 
+    agent = "research_agent"
+
     try:
 
         task = get_task_name(
             state,
-            "research_agent"
+            agent
         )
 
         with ThreadPoolExecutor(max_workers=3) as executor:
@@ -140,9 +142,9 @@ def research_agent(state: AgentState):
                 task
             )
 
-        wikipedia_result = wikipedia_future.result()
-        arxiv_result = arxiv_future.result()
-        duckduckgo_result = duckduckgo_future.result()
+            wikipedia_result = wikipedia_future.result()
+            arxiv_result = arxiv_future.result()
+            duckduckgo_result = duckduckgo_future.result()
 
         context = f"""
     Wikipedia:
@@ -154,7 +156,7 @@ def research_agent(state: AgentState):
     DuckDuckGo:
     {duckduckgo_result}
     """
-        
+        error = f"{agent} : All research sources failed."
         if (
             not wikipedia_result
             and not arxiv_result
@@ -162,8 +164,9 @@ def research_agent(state: AgentState):
         ):
 
             return {
-                "failed_agents": ["research_agent"],
-                "errors": ["All research sources failed."]
+                "agent_statuses": {agent : "failed"},
+                "agent_errors" : {agent : error},
+                "errors" : [error] 
             }
 
         prompt = ChatPromptTemplate.from_template(
@@ -178,22 +181,28 @@ def research_agent(state: AgentState):
         })
 
         return {
-            "results": {
-                "research_agent": response.content.strip()
-            }
-        }
+            "results" : {agent : response.content.strip()},
+            "agent_statuses" : {agent : "succeeded"},
+            "agent_errors" : {agent : ""},
 
+        }
+    
     except Exception as e:
+
+        error = f"{agent} : {str(e)}"
     
         return {
-            "failed_agents": ["research_agent"],
-            "errors": [f"research_agent: {str(e)}"]
+            "agent_statuses" : {agent : "failed"},
+            "agent_errors" : {agent : error},
+            "errors": [error]
         }
     
 def code_agent(state: AgentState):
 
+    agent = "code_agent"
+
     try:
-        task = get_task_name(state,"code_agent")
+        task = get_task_name(state,agent)
 
         prompt = ChatPromptTemplate.from_template(
             CODE_AGENT
@@ -207,18 +216,28 @@ def code_agent(state: AgentState):
 
         return {
             "results" : {
-                "code_agent" : response.content.strip()
-            }
+                agent : response.content.strip()
+            },
+            "agent_statuses" : {agent : "succeeded"},
+            "agent_errors" : {agent : ""},
+
         }
 
     except Exception as e:
 
+        error = f"{agent} : {str(e)}"
+
         return {
-            "failed_agents": ["code_agent"],
-            "errors": [f"code_agent: {str(e)}"]
+            "agent_statuses" : {agent : "failed"},
+            "agent_errors" : {agent : error},
+            "errors": [error]
         }
 
 def final_response(state: AgentState):
+
+    results = state.get("results",{})
+        
+    selected_agents = state.get("selected_agents",[])
 
     if state.get("status") == "failed":
 
@@ -227,19 +246,6 @@ def final_response(state: AgentState):
             "status" : "completed"
         }
 
-
-    results = state.get("results",{})
-
-    selected_agents = state.get("selected_agents",[])
-
-    if len(selected_agents) == 1 and selected_agents[0] in results:
-
-        agent = selected_agents[0]
-
-        return {
-            "answer" : results[agent],
-            "status" : "completed"
-        }
 
     if state.get("status") == "recovery_failed":
 
@@ -252,6 +258,16 @@ def final_response(state: AgentState):
                     "the agent encountered a non-retryable error."
                 ),
                 "status": "completed"
+            }
+
+    
+        if len(selected_agents) == 1 and selected_agents[0] in results:
+    
+            agent = selected_agents[0]
+    
+            return {
+                "answer" : results[agent],
+                "status" : "completed"
             }
 
         return {
@@ -297,6 +313,8 @@ def final_response(state: AgentState):
 
 def faq_agent(state:AgentState):
 
+    agent = "faq_agent"
+
     try:
 
         task = get_task_name(state,"faq_agent")
@@ -326,43 +344,56 @@ def faq_agent(state:AgentState):
 
         return {
             "results": {
-                "faq_agent": response.content.strip()
-            }
+                agent : response.content.strip()
+            },
+            "agent_statuses" : {agent : "succeeded"},
+            "agent_errors" : {agent : ""}
         }
 
     except Exception as e:
 
+        error = f"{agent} : {str(e)}"
+
         return {
-            "failed_agents": ["faq_agent"],
-            "errors": [f"faq_agent: {str(e)}"]
+            "agent_statuses" : {agent :"failed"},
+            "agent_errors" : {agent : error},
+            "errors": [error]
         }
 
 def validate_results(state: AgentState):
 
     selected_agents = state.get("selected_agents", [])
-    results = state.get("results", {})
+    agent_statuses = state.get("agent_statuses", {})
 
-    successful_agents = list(results.keys())
+    failed_agents = []
 
-    all_agents_succeeded = all(
-        agent in successful_agents
-        for agent in selected_agents
-    )
+    successful_agents = []
 
-    if all_agents_succeeded:
+    for agent in selected_agents:
 
-        return {
-            "status": "validated_results"
-        }
+        if agent_statuses.get(agent) != "succeeded":
 
-    if results:
+            failed_agents.append(agent)
 
-        return {
-            "status": "partial_failure"
-        }
+        else:
+
+            successful_agents.append(agent)
+
+    if not failed_agents:
+
+        status = "validated_results"
+
+    elif successful_agents:
+
+        status = "partial_failure"
+
+    else:
+
+        status = "failed"
 
     return {
-        "status": "failed"
+        "failed_agents" : failed_agents,
+        "status" : status
     }
 
 MAX_RECOVERY_ATTEMPTS = 2
@@ -380,9 +411,9 @@ def recovery_node(state: AgentState):
         []
     )
 
-    errors = state.get(
-        "errors",
-        []
+    agent_errors = state.get(
+        "agent_errors",
+        {}
     )
 
     if not failed_agents or recovery_iterations >= MAX_RECOVERY_ATTEMPTS:
@@ -395,24 +426,16 @@ def recovery_node(state: AgentState):
 
     for agent in failed_agents:
 
-        agent_errors = [
-            error
-            for error in errors
-            if error.startswith(f"{agent}:")
-        ]
+        error = agent_errors.get(agent,"")
 
-        for error in agent_errors:
-
-            if is_retryable_error(error):
-
-                retry_agents.append(agent)
-                break
+        if error and is_retryable_error(error):
+            retry_agents.append(agent)
 
     if not retry_agents:
-
         return {
-            "status": "recovery_failed"
+            "status" : "recovery_failed"
         }
+
 
     return {
         "retry_agents": retry_agents,
