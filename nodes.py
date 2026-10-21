@@ -235,65 +235,44 @@ def code_agent(state: AgentState):
 
 def final_response(state: AgentState):
 
-    results = state.get("results",{})
-        
-    selected_agents = state.get("selected_agents",[])
+    results = state.get("results", {})
+    selected_agents = state.get("selected_agents", [])
 
     if state.get("status") == "failed":
-
         return {
-            "answer" : "There was an issue with the delegation. Please try again.",
-            "status" : "completed"
+            "answer": "There was an issue with the delegation. Please try again.",
+            "status": "completed"
         }
 
-
     if state.get("status") == "recovery_failed":
-
-        errors = state.get("errors", [])
-
-        if errors:
-            return {
-                "answer": (
-                    "The request could not be completed because "
-                    "the agent encountered a non-retryable error."
-                ),
-                "status": "completed"
-            }
-
-    
-        if len(selected_agents) == 1 and selected_agents[0] in results:
-    
-            agent = selected_agents[0]
-    
-            return {
-                "answer" : results[agent],
-                "status" : "completed"
-            }
-
         return {
-            "answer": "The request could not be completed.",
+            "answer": (
+                "The request could not be completed because "
+                "one or more agents failed and recovery was unsuccessful."
+            ),
             "status": "completed"
         }
 
     if not results:
-
         return {
-            "answer" : "I was unable to generate an answer as no agent produced a result",
-            "status" : "completed"
+            "answer": "I was unable to generate an answer as no agent produced a result",
+            "status": "completed"
         }
 
+    if len(selected_agents) == 1 and selected_agents[0] in results:
+        agent = selected_agents[0]
+        return {
+            "answer": results[agent],
+            "status": "completed"
+        }
 
     try:
-        
-        prompt = ChatPromptTemplate.from_template(
-            FINAL_RESPONSE_PROMPT
-        )
-
+        prompt = ChatPromptTemplate.from_template(FINAL_RESPONSE_PROMPT)
         chain = prompt | llm
 
         response = chain.invoke({
             "query": state["query"],
-            "results": state["results"]
+            "results": results
         })
 
         return {
@@ -302,13 +281,12 @@ def final_response(state: AgentState):
         }
 
     except Exception as e:
-
-        print("Final Response Error",repr(e))
+        print("Final Response Error", repr(e))
 
         return {
-            "answer" : "The system completed the agent processing but was unable to generate the final response.",
-            "status" : "completed",
-            "errors" : [str(e)]
+            "answer": "The system completed the agent processing but was unable to generate the final response.",
+            "status": "completed",
+            "errors": [str(e)]
         }
 
 def faq_agent(state:AgentState):

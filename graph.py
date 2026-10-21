@@ -18,14 +18,16 @@ def route_after_supervisor(state:AgentState):
 
         return "final_response"
 
-    if state["decision"] == "route":
-        return state["selected_agents"]
+    decision = state.get("decision")
 
-    elif state["decision"] == "clarify":
+    if decision == "route":
+        return state.get("selected_agents",[])
+
+    elif decision == "clarify":
 
         return "clarification_node"
 
-    return "final_response"
+    raise ValueError(f"Unexpected supervisor decision : {decision}")
 
 def route_after_result_validation(state: AgentState):
 
@@ -37,7 +39,7 @@ def route_after_result_validation(state: AgentState):
     if status in ["partial_failure", "failed"]:
         return "recovery_node"
 
-    return "final_response"
+    raise ValueError(f"Unexpected validation status: {status}")
 
 def clarification_node(state:AgentState):
 

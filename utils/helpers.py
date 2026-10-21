@@ -10,7 +10,7 @@ def get_task_name(state:AgentState,agent_name:str):
 
             return step["task"]
 
-    return None
+    raise ValueError(f"No task found for agent: {agent_name}")
 
 def load_faq():
 
