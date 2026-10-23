@@ -12,6 +12,10 @@ Agents available :-
 
 ---
 
+
+**Live Demo:** [Try Multi-Agent System](https://multi-agent-system-hn67.onrender.com/)
+
+
 ## Features
 
 - Agentic AI System - Uses multiple specialized agents to handle different types of queries.
@@ -111,7 +115,15 @@ project/
 ├── schemas/
 │   ├── __init__.py
 │   └── supervisor.py
-│
+|
+│── tests/
+|   ├── __init__.py
+│   ├── test_agent.py
+│   ├── test_graph.py
+│   ├── test_helper.py
+│   └── test_nodes.py
+|
+|
 ├── utils/
 │   ├── __init__.py
 │   ├── config.py
